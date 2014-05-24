@@ -17,6 +17,7 @@ enum MENU_SELECT
 	MENU_STROKE,
 };
 
+#define HOTKEY_ID		0x1000
 
 // CCarbideDlg 对话框
 class CCarbideDlg : public CDialog
@@ -45,6 +46,7 @@ protected:
 	int m_menu;
 	CString m_input;
 	CString m_element_content;
+	BOOL m_pressed_control;
 
 
 	// 生成的消息映射函数
@@ -72,4 +74,5 @@ public:
 	afx_msg void OnPmenuActive();
 	afx_msg void OnPmenuClick();
 	afx_msg void OnPmenuStroke();
+	afx_msg void OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2);
 };

@@ -81,6 +81,7 @@ BEGIN_MESSAGE_MAP(CCarbideDlg, CDialog)
 	ON_COMMAND(ID_PMENU_ACTIVE, &CCarbideDlg::OnPmenuActive)
 	ON_COMMAND(ID_PMENU_CLICK, &CCarbideDlg::OnPmenuClick)
 	ON_COMMAND(ID_PMENU_STROKE, &CCarbideDlg::OnPmenuStroke)
+	ON_WM_HOTKEY()
 END_MESSAGE_MAP()
 
 
@@ -155,6 +156,11 @@ BOOL CCarbideDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	m_worker = NULL;
 	m_instruction.SetImage(IDB_BITMAP2);
+
+	// 注册热键
+	m_pressed_control = FALSE;
+	RegisterHotKey(GetSafeHwnd(), HOTKEY_ID, MOD_CONTROL, 0);
+
 
 	CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
@@ -293,7 +299,8 @@ void CCarbideDlg::OnLButtonUp(UINT nFlags, CPoint point)
 			// 添加到行尾
 // 			CEdit *pEdit = (CEdit*)GetDlgItem(IDC_EDIT_CODE);
 // 			pEdit->SetSel(-1, -1, FALSE);
-// 			pEdit->ReplaceSel(strTemp, TRUE);
+// 			pEdit->ReplaceSel(strTemp, TRUE);
+
 		}
 
 		m_worker->SetImage(IDB_BITMAP2);
@@ -319,6 +326,8 @@ void CCarbideDlg::OnMouseMove(UINT nFlags, CPoint point)
 void CCarbideDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
+
+	UnregisterHotKey(GetSafeHwnd(), HOTKEY_ID);
 
 	m_auto = NULL;
 	CoUninitialize();
@@ -396,7 +405,15 @@ CString CCarbideDlg::ProduceCode( CComPtr<IUIAutomationElement> pElement )
 	CString strName = bstrName;
 	if( !strName.IsEmpty() )
 	{
-		strCode.Format(_T("Win%s(\"%s\")"), strControlType, strName);
+		if( strName == _T("Window") )
+		{
+			strCode = strName;
+		}
+		else
+		{
+			strCode.Format(_T("Win%s(\"%s\")"), strControlType, strName);
+		}
+
 		return strCode;
 	}
 
@@ -405,7 +422,7 @@ CString CCarbideDlg::ProduceCode( CComPtr<IUIAutomationElement> pElement )
 	CString strId = bstrAutomationId;
 	if ( !strId.IsEmpty() )
 	{
-		strCode.Format(_T("Win%s(id=\"%s\")"), strControlType, strId);
+		strCode.Format(_T("Win%s({id=\"%s\"})"), strControlType, strId);
 		return strCode;
 	}
 
@@ -414,7 +431,7 @@ CString CCarbideDlg::ProduceCode( CComPtr<IUIAutomationElement> pElement )
 	CString strClassName = bstrClassName;
 	if ( !strClassName.IsEmpty() )
 	{
-		strCode.Format(_T("Win%s(class=\"%s\")"), strControlType, strClassName);
+		strCode.Format(_T("Win%s({class=\"%s\"})"), strControlType, strClassName);
 		return strCode;
 	}
 
@@ -434,4 +451,22 @@ CString CCarbideDlg::ElementCode()
 	}
 
 	return strCode;
+}
+
+void CCarbideDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
+{
+	if( nHotKeyId == HOTKEY_ID )
+	{
+		// 表明按下Ctrl键了
+		if( nKey1 == MOD_CONTROL )
+		{
+			m_pressed_control = TRUE;
+		}
+		else
+		{
+			m_pressed_control = FALSE;
+		}
+	}
+
+	CDialog::OnHotKey(nHotKeyId, nKey1, nKey2);
 }
